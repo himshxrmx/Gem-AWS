@@ -1,27 +1,111 @@
-# Code Review: Smart Attendance System
+Smart Attendance & Engagement System v2 (AWS + Gemini)
+An automated, serverless classroom monitoring system that eliminates manual roll calls. By leveraging Google Gemini 2.5 Flash's multimodal vision capabilities deployed on AWS Serverless infrastructure (Lambda & API Gateway), this system processes real-time classroom imagery to instantly calculate attendance and gauge overall student engagement.
 
-## 1. Architecture & General Strengths
-- **Clean Separation:** The split between a vanilla HTML/JS frontend and an AWS SAM serverless backend is classic and effective.
-- **Serverless Backend:** Using API Gateway + Lambda + DynamoDB ensures the backend is highly scalable and cost-effective.
-- **AI Integration:** Using the newer Gemini 2.5 Flash model directly via `fetch` inside the Lambda is efficient and avoids heavy SDK dependencies.
+Key Features
+Zero-Touch Attendance: Completely automates roll calls using wide-angle classroom images.
 
-## 2. Frontend Feedback
-- **Hardcoded API URLs:** In `script.js` (line 20) and `dashboard.js` (line 4), the API URL (`https://h2s5lbstm7...`) is hardcoded.
-  - *Recommendation:* Extract this into a central `config.js` file to make updating environments easier across the project.
-- **Duplicate Event Listeners:** In `auth.js`, there is duplicate code for the form submission. Lines 11-27 handle the active form submit inside `DOMContentLoaded`, and then lines 49-64 attach another independent submit listener to `authForm`.
-  - *Recommendation:* Remove the redundant code at the bottom of the file to prevent unexpected bugs.
-- **Missing Form Size Checks:** `script.js` converts images to Base64 and sends them. AWS HTTP APIs have a 10MB payload limit.
-  - *Recommendation:* Add a quick frontend validation (e.g., `if (file.size > 5 * 1024 * 1024) { alert("File too large"); }`).
-- **Mock Authentication:** Currently, the system has no secure authentication (just UI redirection).
-  - *Recommendation:* For a true scalable system or production, integrate AWS Cognito (or Firebase Auth) to secure the frontend and API Gateway endpoints via Authorizers.
+Real-Time Engagement Analytics: Classifies student expressions into 6 distinct categories (Happy, Neutral, Bored, Sad, Angry, Surprised) to calculate a live "Classroom Engagement Score."
 
-## 3. Backend Feedback
-- **Prompt vs JSON Schema in Gemini:** In `analyze.js`, you use prompting to ask for JSON output.
-  - *Recommendation:* You can use Gemini's built-in feature to enforce JSON by passing `responseMimeType: "application/json"` in the API request configuration. This guarantees structural correctness instead of relying solely on prompt adherence.
-- **Partition Key Design:** The DynamoDB data model uses `"class_session"` as a hardcoded partition key for all records, and `timestamp` as the sort key. 
-  - *Recommendation:* This is fine for a hackathon demo, but if multiple classes run concurrently, you'll run into hot-partition issues and mixed data. You should pass a `classId` from the frontend and use that as the partition key.
-- **CORS Configuration:** In `template.yaml`, `AllowOrigins` is set to `["*"]`.
-  - *Recommendation:* In production, restrict this to the exact S3, CloudFront, or Vercel domain where your frontend is hosted.
+High-Speed Inference: Powered by Gemini 2.5 Flash for sub-second multimodal analysis.
 
-## 4. Suggested Next Steps
-If you'd like, I can immediately fix any of the above components (like fixing the duplicate code in `auth.js` or extracting the API URLs). Just let me know which area you'd like me to focus on first!
+Fully Serverless: 100% serverless architecture using AWS SAM, ensuring zero idle costs and infinite scalability.
+
+Optimized Data Retrieval: DynamoDB integration with efficient querying for charting time-series engagement data on the frontend.
+
+Tech Stack & Architecture
+Compute: AWS Lambda (Node.js 20.x)
+
+Routing: Amazon API Gateway (HTTP API)
+
+Database: Amazon DynamoDB (Pay-Per-Request)
+
+AI Engine: Google Gemini 2.5 Flash (REST API)
+
+Infrastructure as Code (IaC): AWS Serverless Application Model (SAM)
+
+Getting Started & Deployment
+This project uses AWS SAM for deployment. The configuration is pre-set to deploy a stack named THE-GRAD in the us-east-1 region.
+
+Prerequisites
+AWS CLI installed and configured (aws configure)
+
+AWS SAM CLI installed
+
+Node.js v20+
+
+A Google Gemini API Key
+
+Deployment Steps
+Clone the repository:
+
+Bash
+git clone https://github.com/yourusername/Smart-Attendance-System-v2.git
+cd Smart-Attendance-System-v2
+Install local dependencies (optional for local testing):
+
+Bash
+npm install
+Build the SAM Application:
+
+Bash
+sam build
+Deploy to AWS:
+Provide your Gemini API key during deployment so the Lambda functions can access it securely via environment variables.
+
+Bash
+sam deploy --parameter-overrides GeminiApiKey="YOUR_GEMINI_API_KEY_HERE"
+Retrieve your API URL:
+Once deployed, SAM will output your live API Gateway Endpoint URL (e.g., https://xxxxxx.execute-api.us-east-1.amazonaws.com). Use this as the API_BASE in your frontend application.
+
+API Reference
+1. Analyze Classroom Image
+Endpoint: POST /analyze
+
+Description: Accepts a base64 encoded image, passes it to Gemini 2.5 Flash for expression analysis, calculates the engagement percentage, and saves the record to DynamoDB.
+
+Request Body:
+
+JSON
+{
+  "image": "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEAAAAAA..."
+}
+Successful Response (200 OK):
+
+JSON
+{
+  "id": "class_session",
+  "timestamp": 1709999999999,
+  "recordId": "550e8400-e29b-41d4-a716-446655440000",
+  "total_students": 42,
+  "happy": 20,
+  "neutral": 18,
+  "bored": 4,
+  "sad": 0,
+  "angry": 0,
+  "surprised": 0,
+  "engagement_percentage": 90
+}
+2. Fetch Dashboard Records
+Endpoint: GET /records
+
+Description: Retrieves the last 20 classroom sessions from DynamoDB, sorted chronologically from oldest to newest for seamless Chart.js integration.
+
+Successful Response (200 OK):
+
+JSON
+[
+  {
+    "id": "class_session",
+    "timestamp": 1709999900000,
+    "recordId": "...",
+    "total_students": 42,
+    "engagement_percentage": 90
+  }
+]
+Author
+Him Sharma
+
+GitHub: @himshxrmx
+
+Project Version: 2.0 (AWS Cloud Edition)
+
