@@ -1,0 +1,16 @@
+{
+  "name": "smart-attendance-backend",
+  "version": "1.0.0",
+  "description": "Serverless Backend for Smart Attendance",
+  "main": "src/handlers/analyze.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.500.0",
+    "@aws-sdk/lib-dynamodb": "^3.500.0",
+    "@google/generative-ai": "^0.24.1",
+    "uuid": "^9.0.1"
+  }
+}

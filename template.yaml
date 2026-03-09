@@ -1,0 +1,86 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Smart Attendance System v2 Backend
+
+Globals:
+  Function:
+    Timeout: 29 # Gemini can take a few seconds
+    Runtime: nodejs20.x
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref AttendanceTable
+        GEMINI_API_KEY: !Ref GeminiApiKey
+
+Parameters:
+  GeminiApiKey:
+    Type: String
+    Description: "API Key from Google AI Studio"
+    NoEcho: true
+
+Resources:
+  # 1. The Database
+  AttendanceTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: AttendanceRecords
+      AttributeDefinitions:
+        - AttributeName: "id"
+          AttributeType: "S"
+        - AttributeName: "timestamp"
+          AttributeType: "N"
+      KeySchema:
+        - AttributeName: "id"
+          KeyType: "HASH"
+        - AttributeName: "timestamp"
+          KeyType: "RANGE"
+      BillingMode: PAY_PER_REQUEST
+
+  # 2. API Gateway
+  AttendanceApi:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "*" # Restrict this to your S3 domain in production
+        AllowMethods:
+          - POST
+          - GET
+        AllowHeaders:
+          - Content-Type
+
+  # 3. Lambda: Analyze Image
+  AnalyzeFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/analyze.handler
+      Policies:
+        - DynamoDBCrudPolicy:
+            TableName: !Ref AttendanceTable
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AttendanceApi
+            Path: /analyze
+            Method: POST
+
+  # 4. Lambda: Get Dashboard Data
+  GetRecordsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: src/handlers/getRecords.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref AttendanceTable
+      Events:
+        ApiEvent:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref AttendanceApi
+            Path: /records
+            Method: GET
+
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${AttendanceApi}.execute-api.${AWS::Region}.amazonaws.com"

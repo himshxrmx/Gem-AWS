@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Smart Attendance Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+<!-- NAVBAR -->
+<nav class="navbar flex-between">
+  <div class="logo gradient-text">SMART ATTENDANCE</div>
+  <div class="nav-links">
+    <a href="home.html">Home</a>
+    <a href="#">Dashboard</a>
+    <a href="index.html">Logout</a>
+  </div>
+</nav>
+
+<!-- DASHBOARD WRAPPER -->
+<div class="dashboard">
+
+  <!-- MAIN CONTENT -->
+  <div class="dashboard-content">
+
+    <div class="dashboard-header">
+      <h2 class="gradient-text">Smart Attendance Dashboard</h2>
+    </div>
+
+    <!-- ================= STATS ================= -->
+    <div class="stats-grid">
+
+      <div class="stat-card stat-primary">
+        <h4>Total Students</h4>
+        <h2 id="total">0</h2>
+      </div>
+
+      <div class="stat-card stat-success">
+        <h4>Engaged</h4>
+        <h2 id="engaged">0</h2>
+      </div>
+
+      <div class="stat-card stat-danger">
+        <h4>Not Engaged</h4>
+        <h2 id="notEngaged">0</h2>
+      </div>
+
+    </div>
+
+    <!-- ================= CHART ================= -->
+    <div class="chart-card">
+      <h3>Engagement Distribution</h3>
+      <canvas id="engagementChart"></canvas>
+    </div>
+
+  </div>
+
+</div>
+
+<script src="dashboard.js"></script>
+
+</body>
+</html>
+
+
